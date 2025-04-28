@@ -13,6 +13,14 @@ A lightweight Node.js server using Express, Sequelize (MariaDB), and an in-memor
 - **Error Handling** with clear HTTP status codes and messages
 - **Desktop Integration**: simple to hook into any desktop app (Electron, .NET, etc.)
 - **SQLite Fallback**: automatic in-memory DB when MariaDB is unavailable
+- **Clustering**: multi-core via Node.js cluster
+- **Security & CORS**: Helmet headers, CORS & rate limiting
+- **Logging**: HTTP request logs via Morgan
+- **Validation**: Joi schema validation
+- **Multi-level Cache**: in-memory LRU + Redis
+- **Metrics & Health**: `/metrics` & `/health` endpoints (Prometheus)
+- **Versioned API**: served under `/v1`
+- **Graceful Shutdown**: handles SIGTERM/SIGINT
 
 ---
 
@@ -41,6 +49,11 @@ DB_NAME=mydb            # Database name
 CACHE_MAX=100           # Max number of items in cache
 CACHE_TTL=300000        # Cache TTL in ms (default 5m)
 PORT=3000               # HTTP port
+REDIS_HOST=127.0.0.1    # Redis host
+REDIS_PORT=6379         # Redis port
+CORS_ORIGIN=*           # CORS allowed origin
+RATE_LIMIT_WINDOW=900000 # Rate-limit window in ms (default 15m)
+RATE_LIMIT_MAX=100       # Max requests per window
 ```
 
 ---
@@ -68,13 +81,15 @@ The `docker-compose.yml` maps port `3306` for MariaDB and `3000` for the API.
 
 ## API Docs
 
-Browse the interactive Swagger UI at [http://localhost:3000/docs](http://localhost:3000/docs).
+Browse the interactive Swagger UI at:
+  - [http://localhost:3000/docs](http://localhost:3000/docs)
+  - [http://localhost:3000/v1/docs](http://localhost:3000/v1/docs)
 
 ---
 
 ## API Endpoints
 
-### GET /items/:id
+### GET /v1/items/:id
 
 - **200 OK** `{ source: 'cache'|'db', item }`
 - **404 Not Found** `{ error: 'Not found' }`
@@ -82,10 +97,10 @@ Browse the interactive Swagger UI at [http://localhost:3000/docs](http://localho
 
 #### Example
 ```bash
-curl http://localhost:3000/items/1
+curl http://localhost:3000/v1/items/1
 ```
 
-### POST /items
+### POST /v1/items
 
 - **400 Bad Request** on missing `name`
 - **201 Created** returns new item and caches it
@@ -100,7 +115,25 @@ curl http://localhost:3000/items/1
 ```bash
 curl -X POST -H "Content-Type: application/json" \
   -d '{"name":"foo","value":"bar"}' \
-  http://localhost:3000/items
+  http://localhost:3000/v1/items
+```
+
+### GET /metrics
+
+- **200 OK**: Prometheus metrics
+
+#### Example
+```bash
+curl http://localhost:3000/metrics
+```
+
+### GET /health
+
+- **200 OK**: health status JSON
+
+#### Example
+```bash
+curl http://localhost:3000/health
 ```
 
 ---
@@ -145,7 +178,7 @@ const API = 'http://localhost:3000';
 
 async function fetchItem(id) {
   try {
-    const { data } = await axios.get(`${API}/items/${id}`);
+    const { data } = await axios.get(`${API}/v1/items/${id}`);
     console.log(data);
   } catch (err) {
     console.error(err.response?.data || err.message);
@@ -160,7 +193,7 @@ using System.Net.Http;
 using System.Text.Json;
 
 var client = new HttpClient();
-var resp = await client.GetAsync("http://localhost:3000/items/1");
+var resp = await client.GetAsync("http://localhost:3000/v1/items/1");
 if (resp.IsSuccessStatusCode) {
     var json = await resp.Content.ReadAsStringAsync();
     var item = JsonSerializer.Deserialize<Item>(json);
