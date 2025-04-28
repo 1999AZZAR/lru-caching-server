@@ -1,12 +1,20 @@
+const dns = require('dns');
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
 const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config();
 
+// Ensure IPv4 host to avoid IPv6 resolution issues
+const dbHost = process.env.DB_HOST === 'localhost'
+  ? '127.0.0.1'
+  : process.env.DB_HOST;
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
   process.env.DB_PASS,
   {
-    host: process.env.DB_HOST || 'localhost',
+    host: dbHost || '127.0.0.1',
     port: process.env.DB_PORT || 3306,
     dialect: 'mariadb',
     logging: false,

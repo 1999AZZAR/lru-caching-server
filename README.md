@@ -12,6 +12,7 @@ A lightweight Node.js server using Express, Sequelize (MariaDB), and an in-memor
 - **Create & Cache**: POST endpoint inserts into DB and cache
 - **Error Handling** with clear HTTP status codes and messages
 - **Desktop Integration**: simple to hook into any desktop app (Electron, .NET, etc.)
+- **SQLite Fallback**: automatic in-memory DB when MariaDB is unavailable
 
 ---
 
@@ -26,6 +27,7 @@ A lightweight Node.js server using Express, Sequelize (MariaDB), and an in-memor
    ```bash
    npm start
    ```
+**Note:** If MariaDB is not configured or reachable, the server will automatically fallback to an in-memory SQLite DB (no extra setup required).
 4. The API listens on `http://localhost:3000` by default.
 
 ### Environment Variables
