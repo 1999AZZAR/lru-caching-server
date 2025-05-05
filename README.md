@@ -201,6 +201,51 @@ if (resp.IsSuccessStatusCode) {
 }
 ```
 
+### Python / Flask
+
+```python
+from flask import Flask, jsonify, request
+from requests import Session
+
+app = Flask(__name__)
+api_session = Session()
+api_session.base_url = "http://localhost:3000/v1"
+
+@app.route('/items/<int:item_id>')
+def get_item(item_id):
+    try:
+        response = api_session.get(f'{api_session.base_url}/items/{item_id}')
+        response.raise_for_status()
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/items', methods=['POST'])
+def create_item():
+    data = request.get_json()
+    try:
+        response = api_session.post(f'{api_session.base_url}/items', json=data)
+        response.raise_for_status()
+        return jsonify(response.json()), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+This example shows how to:
+1. Create a Flask application that proxies requests to the LRU caching server
+2. Use `requests.Session` for efficient HTTP requests
+3. Handle errors and return appropriate HTTP status codes
+4. Maintain clean separation between your application and the caching layer
+
+You can easily extend this example by adding:
+- Custom error handling middleware
+- Request validation
+- Rate limiting
+- Logging
+- Circuit breaker patterns for retry logic
 ### Other Clients
 
 Any language that can make HTTP calls (Python `requests`, Java `HttpClient`, etc.) will work.
