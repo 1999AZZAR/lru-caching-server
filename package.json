@@ -19,7 +19,7 @@
     "cors": "^2.8.5",
     "express-rate-limit": "^6.7.0",
     "prom-client": "^14.0.1",
-    "morgan": "^1.10.0",
+    "morgan": "^1.10.1",
     "joi": "^17.6.0",
     "ioredis": "^5.4.1"
   }
